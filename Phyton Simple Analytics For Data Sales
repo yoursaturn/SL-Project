@@ -1,0 +1,138 @@
+# This code will filter the top 20 sales by SKU name, transaction type, quantity, and customer name from the provided data.
+
+import pandas as pd
+
+# Load the data
+file_path = 'DSR Jan-Juli 2024 ST EG Buah Batu (2041).xlsx'
+df = pd.read_excel(file_path, sheet_name=None)
+
+# Combine all sheets into one dataframe
+combined_df = pd.concat(df.values(), ignore_index=True)
+
+# Select relevant columns
+relevant_columns = ['Sku Name', 'Transaction Type', 'Quantity', 'Customer Name']
+filtered_df = combined_df[relevant_columns]
+
+# Group by SKU name, transaction type, quantity, and customer name, then sum the quantities
+grouped_df = filtered_df.groupby(relevant_columns).size().reset_index(name='Count')
+
+# Sort by quantity in descending order and select the top 20
+top_20_sales = grouped_df.sort_values(by='Quantity', ascending=False).head(20)
+
+# Display the result
+print(top_20_sales)
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the Excel file
+file_path = 'DSR Jan-Juli 2024 ST EG Buah Batu (2041).xlsx'
+sheets = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI']
+dfs = [pd.read_excel(file_path, sheet_name=sheet) for sheet in sheets]
+
+# Combine all sheets
+combined_df = pd.concat(dfs, keys=sheets)
+
+# Remove rows where 'Order Date' is 'TOTAL'
+combined_df = combined_df[combined_df['Order Date'] != 'TOTAL']
+
+# Exclude paper bag and eco friendly shopping bag
+exclude_items = ['PAPER BAG', 'ECO FRIENDLY SHOPPING BAG']
+combined_df = combined_df[~combined_df['Sku Name'].str.contains('|'.join(exclude_items), case=False)]
+
+# Extract month from the multiindex
+combined_df.reset_index(level=0, inplace=True)
+combined_df.rename(columns={'level_0': 'Month'}, inplace=True)
+
+# Group by Month and Transaction Type, then sum the Order Amount
+monthly_sales = combined_df.groupby(['Month', 'Transaction Type'])['Order Amount'].sum().unstack().fillna(0)
+
+# Plot the trend
+plt.figure(figsize=(14, 8))
+monthly_sales.plot(kind='line', marker='o')
+plt.title('Monthly Sales Trend by Transaction Type (January - June 2024)')
+plt.xlabel('Month')
+plt.ylabel('Total Sales Amount')
+plt.legend(title='Transaction Type')
+plt.grid(True)
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('monthly_sales_trend_by_transaction_type.png')
+plt.show()
+
+print('Monthly sales trend by transaction type plotted and saved as monthly_sales_trend_by_transaction_type.png')
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the Excel file
+file_path = 'DSR Jan-Juli 2024 ST EG Buah Batu (2041).xlsx'
+sheets = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI']
+dfs = [pd.read_excel(file_path, sheet_name=sheet) for sheet in sheets]
+
+# Combine all sheets
+combined_df = pd.concat(dfs, keys=sheets)
+
+# Remove rows where 'Order Date' is 'TOTAL'
+combined_df = combined_df[combined_df['Order Date'] != 'TOTAL']
+
+# Exclude paper bag and eco friendly shopping bag
+exclude_items = ['PAPER BAG', 'ECO FRIENDLY SHOPPING BAG']
+combined_df = combined_df[~combined_df['Sku Name'].str.contains('|'.join(exclude_items), case=False)]
+
+# Extract month from the multiindex
+combined_df.reset_index(level=0, inplace=True)
+combined_df.rename(columns={'level_0': 'Month'}, inplace=True)
+
+# Convert 'Order Date' to datetime
+combined_df['Order Date'] = pd.to_datetime(combined_df['Order Date'])
+
+# Sort the dataframe by 'Order Date'
+combined_df = combined_df.sort_values('Order Date')
+
+# Calculate total sales per month
+monthly_sales = combined_df.groupby('Month')['Order Amount'].sum().reset_index()
+
+# Plot monthly sales
+plt.figure(figsize=(12, 6))
+sns.barplot(x='Month', y='Order Amount', data=monthly_sales)
+plt.title('Total Sales by Month (January - June 2024)')
+plt.xlabel('Month')
+plt.ylabel('Total Sales Amount')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('monthly_sales.png')
+plt.close()
+
+print("Monthly sales summary:")
+print(monthly_sales)
+
+print("\
+Top 5 selling products overall:")
+top_products = combined_df.groupby('Sku Name')['Quantity'].sum().sort_values(ascending=False).head()
+print(top_products)
+
+print("\
+Monthly sales chart saved as 'monthly_sales.png'")
+# Group by month, SKU name, transaction type, and customer name, then sum the quantities
+monthly_top_products = combined_df.groupby(['Month', 'Sku Name', 'Transaction Type', 'Customer Name'])['Quantity'].sum().reset_index()
+
+# Get the top 20 selling products for each month
+monthly_top_20 = monthly_top_products.groupby('Month').apply(lambda x: x.nlargest(20, 'Quantity')).reset_index(drop=True)
+
+# Save the result to a CSV file
+monthly_top_20.to_csv('monthly_top_20_selling_products.csv', index=False)
+
+print("Top 20 selling products for each month saved as 'monthly_top_20_selling_products.csv'")
+print(monthly_top_20.head())
+
+# Group by month and transaction type, then sum the quantities
+monthly_transaction_type = combined_df.groupby(['Month', 'Transaction Type'])['Quantity'].sum().reset_index()
+
+# Save the result to a CSV file
+monthly_transaction_type.to_csv('monthly_transaction_type_summary.csv', index=False)
+
+print("Total products transacted by transaction type for each month saved as 'monthly_transaction_type_summary.csv'")
+print(monthly_transaction_type.head())
